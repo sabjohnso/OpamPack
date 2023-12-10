@@ -157,8 +157,8 @@ INSTALL_SCRIPT=install.sh
 cat << EOF > $INSTALL_SCRIPT
 #!/bin/bash
 export OPAMROOT=\$PWD/opamroot
-eval \$(./opam env --root=\$PWD/opamroot --switch=\$ocaml_version)
-./opam install -y --assume-depexts -root=$PWD/opamroot $USER_PACKAGES
+eval \$(./opam env --root=\$PWD/opamroot --switch=$ocaml_version)
+./opam install -y --assume-depexts --root=\$PWD/opamroot $USER_PACKAGES
 EOF
 chmod +x $INSTALL_SCRIPT
 
