@@ -1,6 +1,10 @@
 #!/bin/bash
 # Initialization
 
+readonly opampack_script=$0
+readonly ocaml_version=$1; shift
+readonly ocaml_packages=$@;
+
 
 rm -rf _build
 mkdir -p _build/opampack
@@ -10,8 +14,8 @@ cd _build/opampack
 
 # Get the list of packages from the command-line
 
-OPAM_PACK=$0
-USER_PACKAGES=$@
+OPAM_PACK=$opampack_script
+USER_PACKAGES=$ocaml_packages
 if [[ -z $USER_PACKAGES ]] ; then
     echo "Error: $OPAM_PACK [PACKAGE] ..."
     exit -1
@@ -70,8 +74,8 @@ eval $(./opam env)
 
 # Create an empty switch named =opampack=
 
-./opam switch create --empty opampack
-eval $(./opam env --switch=opampack)
+./opam switch create --empty --root=$OPAMROOT $ocaml_version
+eval $(./opam env --root=$OPAMROOT --switch=$ocaml_version)
 
 
 
@@ -81,8 +85,9 @@ PACKAGES=$(echo n \
                | ./opam install --dry-run $USER_PACKAGES \
                | awk '/install/ { print $3 }' \
         )
-
-
+echo "============(BEGIN PACKAGES )======================="
+echo $PACKAGES
+echo "============(END PACKAGES   )======================="
 
 # In the repository, keep only the required packages:
 
@@ -126,20 +131,22 @@ echo n \
              --disable-shell-hook \
              --root=$PWD/opamroot \
              $PWD/opam-repository
-eval $(./opam env)
+eval $(./opam env --root=$PWD/opamroot)
 
 
 
 # Create an empty switch named =opampack=
 
-./opam switch create --empty opampack
-eval $(./opam env --switch=opampack)
+./opam switch create --empty $ocaml_version
+eval $(./opam env --switch=$ocaml_version)
 
 
 
 # Download all the required packages for the installation
-
-./opam install -y --download-only $USER_PACKAGES
+echo
+echo "============(running opam install for download)======================="
+echo
+./opam install -y --root=$PWD/opamroot --download-only $USER_PACKAGES
 
 
 
@@ -150,8 +157,8 @@ INSTALL_SCRIPT=install.sh
 cat << EOF > $INSTALL_SCRIPT
 #!/bin/bash
 export OPAMROOT=\$PWD/opamroot
-eval \$(./opam env --root=\$PWD/opamroot)
-./opam install -y --assume-depexts $USER_PACKAGES
+eval \$(./opam env --root=\$PWD/opamroot --switch=\$ocaml_version)
+./opam install -y --assume-depexts -root=$PWD/opamroot $USER_PACKAGES
 EOF
 chmod +x $INSTALL_SCRIPT
 
